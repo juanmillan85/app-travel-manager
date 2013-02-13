@@ -54,7 +54,7 @@ function GeoSearchProviderOpenStreetMap() {
 
 GeoSearchProviderOpenStreetMap.prototype.GetServiceUrl = function (qry) {
     http://nominatim.openstreetmap.org/search?q=fraunhofer+fokus+berlin
-
-        return 'http://nominatim.openstreetmap.org/search?q='
+        var query='http://nominatim.openstreetmap.org/search?q='
             + qry + '&format=json&polygon=1&addressdetails=1';
+        return query;
 }

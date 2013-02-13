@@ -1439,7 +1439,7 @@ var TravelSearch = function (paramFieldId) {
         fieldId = field;
         that = this;
         $('#' + fieldId).bind({
-            keyup: function (event) {
+            keyup:  function (event) {
                 that.setFilter($('#' + fieldId).val());
                 that.conductSearch();
             }
@@ -1577,7 +1577,7 @@ var POISearch = function (paramFieldId, paramPoiSourceId, paramPoiNotFoundId) {
                 for (akey in wt_pois[key].address) {
                     console.log('*'+wt_pois[key].address[akey]);
                     if (wt_pois[key].address.hasOwnProperty(akey) &&wt_pois[key].address[akey] &&wt_pois[key].address[akey].toUpperCase().indexOf(kw) != -1) {
-                        console.log('*' + wt_pois[key].address[akey]);
+                        //console.log('*' + wt_pois[key].address[akey]);
                         found = true;
                         break;
                     }
@@ -1587,7 +1587,7 @@ var POISearch = function (paramFieldId, paramPoiSourceId, paramPoiNotFoundId) {
                 result.push(key);
                 mrksArray[key].setMap(map);
             }
-            else {
+            else if(mrksArray||mrksArray[key]){
                 mrksArray[key].setMap(null);
             }
         }
@@ -1596,7 +1596,7 @@ var POISearch = function (paramFieldId, paramPoiSourceId, paramPoiNotFoundId) {
             var query=kw;//+country;
             result=new GeoSearch({
                 provider: new GeoSearchProviderOpenStreetMap()
-            }).geosearch(kw+country);
+            }).geosearch(query);
             //create point of interest
             var startIndex=wt_pois.length-1;
             var endLimit=wt_pois.length+result.length-1;
@@ -1608,7 +1608,7 @@ var POISearch = function (paramFieldId, paramPoiSourceId, paramPoiNotFoundId) {
                 var coordinates=new wt.Coordinates(parseFloat(openpoint.lat),parseFloat(openpoint.lon) );
                 var address=  new wt.Address(openpoint.address.road, openpoint.address.building, openpoint.address.postcode, openpoint.address.city, openpoint.address.state, openpoint.address.country);
                 var newDate = new Date;
-                var point = new wt.Poi(newDate.getTime(), openpoint.display_name, "description",coordinates, address);
+                var point = new wt.Poi(newDate.getTime(), openpoint.display_name.split(",")[0], openpoint.display_name,coordinates, address);
                 //push the point of interest inside
                 wt_pois.push(point);
                 wt.saveDataToLocalStorage();
@@ -1617,7 +1617,7 @@ var POISearch = function (paramFieldId, paramPoiSourceId, paramPoiNotFoundId) {
                 mrk = new google.maps.Marker({
                     position: new google.maps.LatLng(wt_pois[startIndex].position.latitude, wt_pois[startIndex].position.longitude),
                     map: map,
-                    title: wt_pois[startIndex].title + "\n" + wt_pois[k].description
+                    title: wt_pois[startIndex].title + "\n" + wt_pois[startIndex].description
                 });
                 google.maps.event.addListener(mrk, 'click', function () {
                     document.location.href = 'poi.html?id=' + wt_pois[startIndex].id;
@@ -1675,18 +1675,47 @@ var POISearch = function (paramFieldId, paramPoiSourceId, paramPoiNotFoundId) {
     this.getFieldId = function () {
         return fieldId;
     }
+    var typingTimer;                //timer identifier
+    var doneTypingInterval = 1000;  //time in ms, 5 second for example
+
+//on keyup, start the countdown
+    $('#in').keyup(function(){
+        clearTimeout(typingTimer);
+        if ($('#in').val) {
+            typingTimer = setTimeout(function(){
+                //do stuff here e.g ajax call etc....
+                var v = $("#in").val();
+                $("#out").html(v);
+            }, doneTypingInterval);
+        }
+    });
+
+
     this.setFieldId = function (field) {
         fieldId = field;
         that = this;
-        $('#' + fieldId).bind({
-            keyup: function (event) {
-                //key up
-                //console.log(event);
-                //console.log($('#'+fieldId).val());
-                that.setFilter($('#' + fieldId).val());
+        var ref;
+        var wrapper = function(){
+            clearTimeout(ref);
+            var keysearch=$('#' + fieldId).val();
+            if(keysearch){
+                ref = setTimeout(function(){
+                    that.setFilter(keysearch);
+                    that.conductSearch();
+                    ref=null;
+                }, 500);
+            } else{
+                that.setFilter(keysearch);
                 that.conductSearch();
             }
-        });
+
+            //console.log(event);
+            //console.log($('#'+fieldId).val());
+            }
+       // $('#' + fieldId).bind({
+        $('#' + fieldId).keyup(wrapper)
+       //     keyup :wrapper
+       // });
     }
     this.setFilter = function (filter) {
         $('#' + fieldId).val(filter);
